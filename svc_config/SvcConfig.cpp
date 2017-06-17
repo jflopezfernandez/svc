@@ -9,11 +9,11 @@ VOID WINAPI DisplayUsage()
 	printf("Usage:\n");
 	printf("\tsvcconfig [command] [service_name]\n\n");
 	printf("\t[command]\n");
-	printf("\t  query\n");
-	printf("\t  describe\n");
-	printf("\t  disable\n");
-	printf("\t  enable\n");
-	printf("\t  delete\n");
+	printf("\t  --query\n");
+	printf("\t  --describe\n");
+	printf("\t  --disable\n");
+	printf("\t  --enable\n");
+	printf("\t  --delete\n");
 }
 
 
@@ -34,8 +34,8 @@ VOID WINAPI DoQuerySvc(const TCHAR *svcName)
 	SC_HANDLE schSCManager;
 	SC_HANDLE schService;
 
-	LPQUERY_SERVICE_CONFIG	lpsc;
-	LPSERVICE_DESCRIPTION	lpsd;
+	LPQUERY_SERVICE_CONFIG	lpsc = nullptr;
+	LPSERVICE_DESCRIPTION	lpsd = nullptr;
 
 	DWORD	dwBytesNeeded,
 			cbBuffSize,
@@ -121,7 +121,16 @@ VOID WINAPI DoQuerySvc(const TCHAR *svcName)
 		goto CLEANUP;
 	}
 
-		
+	
+	// Make sure uninitialized pointers are not dereferenced
+	if ((lpsc == nullptr) || (lpsd == nullptr)) {
+		printf("[ERROR]: Attempting to dereference a null pointer!");
+
+		goto CLEANUP;
+	}
+
+
+
 	// Print the configuration information
 	_tprintf(TEXT("%s configuration: \n"), svcName);
 	_tprintf(TEXT("		Type: 0x%x\n"), lpsc->dwServiceType);
@@ -166,7 +175,7 @@ CLEANUP:
  *
  */
 
-VOID WINAPI DoDisableSvc()
+VOID WINAPI DoDisableSvc(const TCHAR *svcName)
 {
 	SC_HANDLE schSCManager;
 	SC_HANDLE schService;
@@ -177,4 +186,245 @@ VOID WINAPI DoDisableSvc()
 		NULL,							// Local computer
 		NULL,							// ServicesActive database
 		SC_MANAGER_ALL_ACCESS);			// Full access rights
+
+	if (schSCManager == NULL) {
+		printf("OpenSCManager failed (%d) \n", GetLastError());
+
+		return;
+	}
+
+
+	// Get a handle to the service
+	schService = OpenService(
+		schSCManager,					// SCM database
+		svcName,						// Name of service
+		SERVICE_CHANGE_CONFIG);			// Need change config access
+
+	if (schService == NULL) {
+		printf("OpenService failed (%d) \n", GetLastError());
+		CloseServiceHandle(schSCManager);
+
+		return;
+	}
+
+
+	// Change the service start type
+	if (!ChangeServiceConfig(
+		schService,						// Handle of service
+		SERVICE_NO_CHANGE,				// Service type: no change
+		SERVICE_DISABLED,				// Service start type
+		SERVICE_NO_CHANGE,				// Error control: no change
+		NULL,							// Binary path: no change
+		NULL,							// Load order group: no change
+		NULL,							// Tag ID: no change
+		NULL,							// Dependencies: no change
+		NULL,							// Account name: no change
+		NULL,							// Password: no change
+		NULL)) {						// Display name: no change
+
+		printf("ChangeServiceConfig failed (%d) \n", GetLastError());
+	} else {
+		printf("Service disabled successfully. \n");
+	}
+
+	CloseServiceHandle(schService);
+	CloseServiceHandle(schSCManager);
+}
+
+
+
+/** Purpose:
+ *		Enables the service.
+ *
+ *	Parameters:
+ *		none
+ *
+ *	Return value:
+ *		none
+ *
+ *
+ */
+
+VOID WINAPI DoEnableSvc(const TCHAR *svcName)
+{
+	SC_HANDLE schSCManager;
+	SC_HANDLE schService;
+
+	
+	// Get a handle to the SCM database
+	schSCManager = OpenSCManager(
+		NULL,							// Local computer
+		NULL,							// ServicesActive database
+		SC_MANAGER_ALL_ACCESS);			// Full access rights
+
+	if (schSCManager == NULL) {
+		printf("OpenSCManager failed (%d) \n", GetLastError());
+
+		return;
+	}
+
+
+	// Get a handle to the service
+	schService = OpenService(
+		schSCManager,					// SCM database
+		svcName,						// Name of service
+		SERVICE_CHANGE_CONFIG);			// Need change config access
+
+	if (schService == NULL) {
+		printf("OpenService failed (%d) \n", GetLastError());
+		CloseServiceHandle(schSCManager);
+
+		return;
+	}
+
+
+	// Change the service start type
+	if (!ChangeServiceConfig(
+		schService,						// Handle of service
+		SERVICE_NO_CHANGE,				// Service type: no change
+		SERVICE_DEMAND_START,			// Service start type
+		SERVICE_NO_CHANGE,				// Error control: no change
+		NULL,							// Binary path: no change
+		NULL,							// Load order group: no change
+		NULL,							// Tag ID: no change
+		NULL,							// Dependencies: no change
+		NULL,							// Account name: no change
+		NULL,							// Password: no change
+		NULL)) {						// Display name: no change
+
+		printf("ChangeServiceConfig failed (%d) \n", GetLastError());
+	} else {
+		printf("Service enabled successfully.\n");
+	}
+
+	
+	CloseServiceHandle(schService);
+	CloseServiceHandle(schSCManager);
+}
+
+
+
+/** Purpose
+ *		Updates the service description to "This is a test description".
+ *
+ *	Parameters:
+ *		none
+ *
+ *	Return value:
+ *		none
+ *
+ */
+
+VOID WINAPI DoUpdateSvcDesc(const TCHAR *svcName)
+{
+	SC_HANDLE schSCManager;
+	SC_HANDLE schService;
+	SERVICE_DESCRIPTION sd;
+	LPTSTR szDesc = TEXT("This is a test description");
+
+
+	// Get a handle to the SCM database
+	schSCManager = OpenSCManager(
+		NULL,							// Local computer
+		NULL,							// ServicesActive database
+		SC_MANAGER_ALL_ACCESS);			// Full access rights
+
+	if (schSCManager == NULL) {
+		printf("OpenSCManager failed (%d) \n", GetLastError());
+
+		return;
+	}
+
+
+
+	// Get a handle to the service
+	schService = OpenService(
+		schSCManager,
+		svcName,
+		SERVICE_CHANGE_CONFIG);
+
+	if (schService == NULL) {
+		printf("OpenService failed (%d) \n", GetLastError());
+		CloseServiceHandle(schSCManager);
+
+		return;
+	}
+
+
+
+	// Change the service description
+	sd.lpDescription = szDesc;
+
+	if (!ChangeServiceConfig2(
+		schService,
+		SERVICE_CONFIG_DESCRIPTION,
+		&sd)) {
+
+		printf("ChangeServiceConfig2 failed\n");
+	} else {
+		printf("Service description updated successfully.\n");
+	}
+
+
+	CloseServiceHandle(schService);
+	CloseServiceHandle(schSCManager);
+}
+
+
+
+/** Purpose:
+ *		Deletes a service from the SCM database.
+ *
+ *	Parameters:
+ *		none
+ *
+ *	Return value:
+ *		none
+ *
+ */
+
+VOID WINAPI DoDeleteSvc(const TCHAR *svcName)
+{
+	SC_HANDLE schSCManager;
+	SC_HANDLE schService;
+
+
+	// Get a handle to the SCM database
+	schSCManager = OpenSCManager(
+		NULL,							// Local computer
+		NULL,							// ActiveServices database
+		SC_MANAGER_ALL_ACCESS);			// Full access rights
+
+	if (schSCManager == NULL) {
+		printf("OpenSCManager failed (%d) \n", GetLastError());
+
+		return;
+	}
+
+
+	// Get a handle to the service
+	schService = OpenService(
+		schSCManager,					// SCM database
+		svcName,						// Name of service
+		DELETE);						// Need delete access
+
+	if (schService == NULL) {
+		printf("OpenService failed (%d) \n", GetLastError());
+		CloseServiceHandle(schSCManager);
+
+		return;
+	}
+
+
+
+	// Delete the service
+	if (!DeleteService(schService)) {
+		printf("DeleteService failed (%d) \n", GetLastError());
+	} else {
+		printf("Service deleted successfully.\n");
+	}
+
+
+	CloseServiceHandle(schService);
+	CloseServiceHandle(schSCManager);
 }

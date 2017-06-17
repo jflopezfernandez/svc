@@ -12,6 +12,14 @@
 *.advixeproj
 *.amplxeproj
 *.sln
+*.lastbuildstate
+
+# Debug Files
+*.log
+*.tlog
+*.ilk
+*.pdb
+*.idb
 
 # Visual Studio Directories
 /.vs/

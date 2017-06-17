@@ -2,6 +2,14 @@
 #define _MAIN_HPP
 
 
+/** Windows Headers */
+#include <Windows.h>
+#include <tchar.h>
+#include <strsafe.h>
+
+#pragma comment(lib, "advapi32.lib")
+
+
 /** C++ STL */
 #include <iostream>
 
@@ -12,7 +20,8 @@
 
 
 /** Application Headers */
-//...
+#include "ServiceMain.hpp"
+#include "msg.h"
 
 
 

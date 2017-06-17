@@ -1,11 +1,17 @@
 # Compiler-generated Binaries
+
 *.o
 *.obj
-*.so
+*.bin
 *.a
+*.lib
+*.so
+*.dll
 *.exe
 
+
 # Visual Studio Files
+
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
@@ -14,14 +20,25 @@
 *.sln
 *.lastbuildstate
 
+
+# Microsoft SDK MC/RC
+
+*.mc
+*.rc
+*.res
+
+
 # Debug Files
+
 *.log
 *.tlog
 *.ilk
 *.pdb
 *.idb
 
+
 # Visual Studio Directories
+
 /.vs/
 "/My Advisor Results - svc/**"
 "/My Amplifier XE Results - svc/**"

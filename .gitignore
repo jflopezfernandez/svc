@@ -1,0 +1,19 @@
+# Compiler-generated Binaries
+*.o
+*.obj
+*.so
+*.a
+*.exe
+
+# Visual Studio Files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.advixeproj
+*.amplxeproj
+*.sln
+
+# Visual Studio Directories
+/.vs/
+"/My Advisor Results - svc/**"
+"/My Amplifier XE Results - svc/**"
